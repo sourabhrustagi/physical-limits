@@ -43,6 +43,10 @@ button:hover{border-color:var(--acc)}
 label:hover{background:color-mix(in srgb,var(--acc) 8%,transparent)}
 input[type=checkbox]{accent-color:var(--acc)}
 .card.warn{border-left:4px solid #f59e0b;background:color-mix(in srgb,#f59e0b 10%,var(--card))}
+details{margin:10px 0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 12px;box-shadow:var(--sh)}
+summary{cursor:pointer;font-weight:600;padding:8px 0;display:grid;grid-template-columns:auto auto 1fr;gap:8px;align-items:center}
+summary progress{height:8px}details .card{box-shadow:none;background:transparent;border:1px solid var(--line)}
+h2 small{font-size:14px;font-weight:400}nav h3 small,nav button small{opacity:.7;font-weight:400}
 </style>
 </head>
 <body>
@@ -170,21 +174,29 @@ const IC={"Weight & Body":"⚖️","Walking":"🚶","Running":"🏃","Cycling & 
 const LI=["🌱","🌿","🌳","⚡","🏆"];
 const $=id=>document.getElementById(id);
 const S=JSON.parse(localStorage.getItem("pl2")||"{}");
-let fl="all",fc="all",hide=false,q="";
+let fl="all",fc="all",fg="all",hide=false,q="";
+const O=new Set();
+const GR={"🫀 Body & Health":["Weight & Body","Health Numbers"],"🏃 Cardio & Endurance":["Walking","Running","Cycling & Swimming"],"💪 Strength":["Weight Training","Bodyweight Training","Strength"],"🧘 Flexibility & Mind":["Yoga","Core & Flexibility","Mind & Habits"],"🏅 Sports & Skills":["Badminton","Sports & Skills"],"🥗 Food & Recovery":["Fasting & Food","Sleep & Recovery"],"🔥 Daily Challenges":["Daily Reps (Challenges)"]};
 const items=[];
 for(const [c,ls] of Object.entries(D))ls.forEach((a,l)=>a.forEach(t=>items.push({c,l,t,k:c+"|"+t})));
-
-const mk=(id,opts,get,set)=>{$(id).innerHTML=opts.map(([v,t])=>`<button data-v="${v}" class="${get()==v?"on":""}">${t}</button>`).join("");
- $(id).onclick=e=>{if(e.target.dataset.v!=null){set(e.target.dataset.v);draw()}}};
+const cnt=f=>{const a=items.filter(f);return [a.filter(i=>S[i.k]).length,a.length]};
+const esc=x=>x.replace(/"/g,"&quot;");
 
 function draw(){
- mk("lvF",[["all","All levels"],...LV.map((n,i)=>[i,`${LI[i]} ${n}`])],()=>fl,v=>fl=v);
- mk("catF",[["all","All categories"],...Object.keys(D).map(c=>[c,(IC[c]||"")+" "+c])],()=>fc,v=>fc=v);
+ $("lvF").innerHTML=[["all","All levels"],...LV.map((n,i)=>[i,`${LI[i]} ${n}`])].map(([v,t])=>`<button data-v="${v}" class="${fl==v?"on":""}">${t}</button>`).join("");
+ $("catF").innerHTML=`<button data-g="all" class="${fg=="all"&&fc=="all"?"on":""}">All categories</button>`+Object.entries(GR).map(([g,cs])=>{const [d,n]=cnt(i=>cs.includes(i.c));
+  return `<h3 data-g="${g}" style="cursor:pointer">${g} <small>${d}/${n}</small></h3>`+cs.map(c=>{const [d,n]=cnt(i=>i.c==c);
+   return `<button data-v="${esc(c)}" class="${fc==c?"on":""}">${IC[c]||""} ${c} <small>${d}/${n}</small></button>`}).join("")}).join("");
  $("hide").className=hide?"on":"";
- const vis=items.filter(i=>(fl=="all"||i.l==fl)&&(fc=="all"||i.c==fc)&&(!hide||!S[i.k])&&i.t.toLowerCase().includes(q));
- const groups={};vis.forEach(i=>(groups[i.c]??={})[i.l]=(groups[i.c][i.l]||[]).concat(i));
- $("app").innerHTML=Object.entries(groups).map(([c,ls])=>`<h2>${IC[c]||""} ${c}</h2>`+Object.entries(ls).map(([l,a])=>
-  `<div class="card"><b>${LI[l]} Level ${+l+1} · ${LV[l]}</b>`+a.map(i=>`<label class="${S[i.k]?"done":""}"><input type="checkbox" data-k="${i.k.replace(/"/g,"&quot;")}" ${S[i.k]?"checked":""}><span>${i.t}</span></label>`).join("")+"</div>").join("")).join("")||'<p class="mut">Nothing here.</p>';
+ const ok=i=>(fl=="all"||i.l==fl)&&(fc=="all"||i.c==fc)&&(fg=="all"||GR[fg].includes(i.c))&&(!hide||!S[i.k])&&i.t.toLowerCase().includes(q);
+ const vis=items.filter(ok),force=fc!="all"||q;
+ const body=Object.entries(GR).map(([g,cs])=>{
+  const cats=cs.map(c=>{const v=vis.filter(i=>i.c==c);if(!v.length)return"";const [d,n]=cnt(i=>i.c==c);
+   const lv=[0,1,2,3,4].map(l=>{const a=v.filter(i=>i.l==l);return a.length?`<div class="card"><b>${LI[l]} Level ${l+1} · ${LV[l]}</b>`+a.map(i=>`<label class="${S[i.k]?"done":""}"><input type="checkbox" data-k="${esc(i.k)}" ${S[i.k]?"checked":""}><span>${i.t}</span></label>`).join("")+"</div>":""}).join("");
+   return `<details data-c="${esc(c)}" ${force||O.has(c)?"open":""}><summary>${IC[c]||""} ${c}<span class="mut"> ${d}/${n}</span><progress max="${n}" value="${d}"></progress></summary>${lv}</details>`}).join("");
+  if(!cats)return"";const [d,n]=cnt(i=>cs.includes(i.c));
+  return `<h2>${g} <small class="mut">${d}/${n}</small></h2>${cats}`}).join("");
+ $("app").innerHTML=body||'<p class="mut">Nothing here.</p>';
  stats();
 }
 function stats(){
@@ -199,6 +211,10 @@ function stats(){
 $("w").value=localStorage.getItem("w")||116;
 $("w").oninput=stats;
 $("q").oninput=e=>{q=e.target.value.toLowerCase();draw()};
+$("lvF").onclick=e=>{const v=e.target.dataset.v;if(v!=null){fl=v;draw()}};
+$("catF").onclick=e=>{const t=e.target.closest("[data-g],[data-v]");if(!t)return;
+ if(t.dataset.g){fg=t.dataset.g;fc="all"}else{fc=t.dataset.v;fg="all"}draw()};
+$("app").addEventListener("toggle",e=>{const c=e.target.dataset?.c;if(c)e.target.open?O.add(c):O.delete(c)},true);
 $("hide").onclick=()=>{hide=!hide;draw()};
 $("app").onchange=e=>{const k=e.target.dataset.k;if(k){S[k]=e.target.checked;localStorage.setItem("pl2",JSON.stringify(S));
  e.target.parentElement.classList.toggle("done",e.target.checked);stats()}};
