@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Physical Limits to Cross</title>
 <style>
-:root{--bg:#fff;--fg:#1a1a1a;--card:#f3f4f6;--acc:#2563eb;--mut:#6b7280;--line:#d1d5db}
-@media(prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--card:#1e1e22;--acc:#60a5fa;--mut:#9ca3af;--line:#374151}}
+:root{--bg:#f4faf5;--fg:#16301f;--card:#fff;--acc:#16a34a;--mut:#5f7a68;--line:#d7e8dc;--sh:0 1px 3px rgba(22,101,52,.12)}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1a12;--fg:#e6f4ea;--card:#16251b;--acc:#4ade80;--mut:#8fb09b;--line:#27402f;--sh:none}}
 *{box-sizing:border-box}
 body{margin:0 auto;padding:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
 h1{margin:.2em 0}h2{margin:1.4em 0 .4em}
@@ -34,11 +34,20 @@ h3{margin:14px 0 6px;font-size:13px;text-transform:uppercase;color:var(--mut)}
 .col{display:flex;flex-direction:column;gap:4px}.col button{text-align:left;border-radius:8px}
 .lv{grid-template-columns:1fr}
 @media(max-width:900px){.layout{grid-template-columns:1fr}nav,aside{position:static;max-height:none}.col{flex-direction:row;flex-wrap:wrap}}
+.card,.lv div{box-shadow:var(--sh);border:1px solid var(--line)}.card{border-radius:14px}
+header{background:linear-gradient(90deg,#15803d,#4ade80);color:#fff;border:0}header .mut{color:#eaffef}
+header input{border:0}header button{background:#ffffff33;color:#fff;border-color:#ffffff66}header button.on{background:#fff;color:#15803d}
+progress{accent-color:var(--acc);border-radius:8px}
+h2{padding-left:10px;border-left:5px solid var(--acc)}
+button:hover{border-color:var(--acc)}
+label:hover{background:color-mix(in srgb,var(--acc) 8%,transparent)}
+input[type=checkbox]{accent-color:var(--acc)}
+.card.warn{border-left:4px solid #f59e0b;background:color-mix(in srgb,#f59e0b 10%,var(--card))}
 </style>
 </head>
 <body>
 <header>
-  <h1>Physical Limits to Cross</h1>
+  <h1>🌿 Physical Limits to Cross</h1>
   <span class="mut">Male · 37 · 172 cm · 116 kg · <span id="count"></span></span>
   <input id="q" type="search" placeholder="Search…">
   <button id="hide">Hide completed</button>
@@ -153,6 +162,8 @@ const X={
 "Daily Reps (Challenges)":[["10 squats × 7 days","10 push-ups on knees × 7 days","1 min plank × 7 days (build up)","Climb stairs 5 flights daily × 5 days","Stretch 10 min daily × 7 days"],["20 squats + 10 push-ups daily × 14 days","30 sec dead hang daily × 14 days","100 jumping jacks daily × 14 days","1,000 steps extra daily × 14 days","20 min walk + 10 min stretch daily × 14 days"],["100 squats a day × 30 days","50 push-ups a day (any sets) × 30 days","200 skipping jumps/day × 30 days","Plank total 5 min/day × 30 days","50 burpees/day × 14 days"],["200 squats/day × 30 days","100 push-ups/day × 30 days","300 jumping jacks/day × 30 days","10 km total movement/day × 7 days","Run every day for 30 days"],["1,000 push-ups in a week","10,000 squats in a month","100 pull-ups in a day","Run 100 km in a month","Run a streak of 100 days"]]
 };
 for(const c in X){D[c]??=[[],[],[],[],[]];X[c].forEach((a,l)=>D[c][l].push(...a))}
+const IC={"Weight & Body":"⚖️","Walking":"🚶","Running":"🏃","Cycling & Swimming":"🚴","Strength":"💪","Core & Flexibility":"🧘","Fasting & Food":"🥗","Sleep & Recovery":"😴","Health Numbers":"❤️","Mind & Habits":"🧠","Sports & Skills":"🏅","Daily Reps (Challenges)":"🔥"};
+const LI=["🌱","🌿","🌳","⚡","🏆"];
 const $=id=>document.getElementById(id);
 const S=JSON.parse(localStorage.getItem("pl2")||"{}");
 let fl="all",fc="all",hide=false,q="";
@@ -163,20 +174,20 @@ const mk=(id,opts,get,set)=>{$(id).innerHTML=opts.map(([v,t])=>`<button data-v="
  $(id).onclick=e=>{if(e.target.dataset.v!=null){set(e.target.dataset.v);draw()}}};
 
 function draw(){
- mk("lvF",[["all","All levels"],...LV.map((n,i)=>[i,`${i+1}. ${n}`])],()=>fl,v=>fl=v);
- mk("catF",[["all","All categories"],...Object.keys(D).map(c=>[c,c])],()=>fc,v=>fc=v);
+ mk("lvF",[["all","All levels"],...LV.map((n,i)=>[i,`${LI[i]} ${n}`])],()=>fl,v=>fl=v);
+ mk("catF",[["all","All categories"],...Object.keys(D).map(c=>[c,(IC[c]||"")+" "+c])],()=>fc,v=>fc=v);
  $("hide").className=hide?"on":"";
  const vis=items.filter(i=>(fl=="all"||i.l==fl)&&(fc=="all"||i.c==fc)&&(!hide||!S[i.k])&&i.t.toLowerCase().includes(q));
  const groups={};vis.forEach(i=>(groups[i.c]??={})[i.l]=(groups[i.c][i.l]||[]).concat(i));
- $("app").innerHTML=Object.entries(groups).map(([c,ls])=>`<h2>${c}</h2>`+Object.entries(ls).map(([l,a])=>
-  `<div class="card"><b>Level ${+l+1} · ${LV[l]}</b>`+a.map(i=>`<label class="${S[i.k]?"done":""}"><input type="checkbox" data-k="${i.k.replace(/"/g,"&quot;")}" ${S[i.k]?"checked":""}><span>${i.t}</span></label>`).join("")+"</div>").join("")).join("")||'<p class="mut">Nothing here.</p>';
+ $("app").innerHTML=Object.entries(groups).map(([c,ls])=>`<h2>${IC[c]||""} ${c}</h2>`+Object.entries(ls).map(([l,a])=>
+  `<div class="card"><b>${LI[l]} Level ${+l+1} · ${LV[l]}</b>`+a.map(i=>`<label class="${S[i.k]?"done":""}"><input type="checkbox" data-k="${i.k.replace(/"/g,"&quot;")}" ${S[i.k]?"checked":""}><span>${i.t}</span></label>`).join("")+"</div>").join("")).join("")||'<p class="mut">Nothing here.</p>';
  stats();
 }
 function stats(){
  const done=items.filter(i=>S[i.k]).length;
  $("count").textContent=`${done} / ${items.length} limits crossed`;
  $("lv").innerHTML=LV.map((n,l)=>{const a=items.filter(i=>i.l==l),d=a.filter(i=>S[i.k]).length;
-  return `<div><b>${l+1}. ${n}</b>${d}/${a.length}<progress max="${a.length}" value="${d}"></progress></div>`}).join("");
+  return `<div><b>${LI[l]} ${l+1}. ${n}</b>${d}/${a.length}<progress max="${a.length}" value="${d}"></progress></div>`}).join("");
  const w=+$("w").value||116,b=w/(1.72*1.72);
  $("bmi").textContent=`BMI ${b.toFixed(1)} — ${b<18.5?"under":b<25?"healthy":b<30?"overweight":b<35?"obese I":b<40?"obese II":"obese III"} · ${w>25*1.72*1.72?(w-25*1.72*1.72).toFixed(1)+" kg to reach BMI 25":"in healthy range"}`;
  localStorage.setItem("w",w);
