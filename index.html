@@ -5,71 +5,164 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Physical Limits to Cross</title>
 <style>
-:root{--bg:#fff;--fg:#1a1a1a;--card:#f3f4f6;--acc:#2563eb;--mut:#6b7280}
-@media(prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--card:#1e1e22;--acc:#60a5fa;--mut:#9ca3af}}
-body{margin:0 auto;max-width:760px;padding:16px;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
-h1{margin:.2em 0}h2{margin:1.6em 0 .4em;color:var(--acc)}
+:root{--bg:#fff;--fg:#1a1a1a;--card:#f3f4f6;--acc:#2563eb;--mut:#6b7280;--line:#d1d5db}
+@media(prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--card:#1e1e22;--acc:#60a5fa;--mut:#9ca3af;--line:#374151}}
+*{box-sizing:border-box}
+body{margin:0 auto;max-width:900px;padding:16px;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
+h1{margin:.2em 0}h2{margin:1.4em 0 .4em}
 .card{background:var(--card);border-radius:10px;padding:12px 16px;margin:8px 0}
-label{display:flex;gap:10px;padding:6px 0;cursor:pointer}
-input[type=checkbox]{width:20px;height:20px;flex:none;margin-top:3px}
-small,.mut{color:var(--mut)}
-progress{width:100%;height:14px}
 .warn{border-left:4px solid #dc2626}
+.mut{color:var(--mut)}
+.row{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+button{font:inherit;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--fg);cursor:pointer}
+button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+progress{width:100%;height:12px}
+.lv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.lv div{background:var(--card);border-radius:10px;padding:8px 12px;font-size:14px}
+.lv b{display:block}
+label{display:flex;gap:10px;padding:5px 0;cursor:pointer;border-bottom:1px solid var(--line)}
+label:last-child{border:0}
+input[type=checkbox]{width:20px;height:20px;flex:none;margin-top:3px}
+label.done span{text-decoration:line-through;color:var(--mut)}
+.tag{margin-left:auto;font-size:12px;color:var(--mut);white-space:nowrap;padding-left:8px}
+input[type=number],input[type=search]{font:inherit;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
 </style>
 </head>
 <body>
 <h1>Physical Limits to Cross</h1>
-<p class="mut">Male · 37 yrs · 172 cm · 116 kg</p>
+<p class="mut">Male · 37 yrs · 172 cm · 116 kg &nbsp;|&nbsp; <span id="count"></span></p>
 
-<div class="card warn"><b>Before you start:</b> at your BMI, see a doctor for a check-up (blood pressure, blood sugar, heart) first. Start low-impact (walk, cycle, swim) to protect knees and joints. Pain ≠ progress — stop on chest pain, dizziness or sharp joint pain. Fasting goals are not for you if you're on diabetes/BP medication without medical advice.</div>
+<div class="card warn"><b>Before you start:</b> at your BMI, get a check-up first (blood pressure, sugar, heart). Start low-impact (walk, cycle, swim) to protect knees. Stop on chest pain, dizziness or sharp joint pain. Skip fasting goals if you're on diabetes/BP medication without medical advice. Levels 4–5 are long-term (1–3 years) — don't rush them.</div>
 
 <div class="card">
-  <label>Current weight (kg) <input id="w" type="number" value="116" style="width:80px"></label>
+  <label style="border:0">Weight (kg) <input id="w" type="number" style="width:90px"></label>
   <div id="bmi"></div>
-  <progress id="prog" max="100" value="0"></progress>
-  <div id="pt" class="mut"></div>
 </div>
 
+<h2>Your levels</h2>
+<div class="lv" id="lv"></div>
+
+<h2>Limits</h2>
+<div class="row" id="lvF"></div>
+<div class="row" id="catF"></div>
+<div class="row">
+  <input id="q" type="search" placeholder="Search…" style="flex:1;min-width:140px">
+  <button id="hide">Hide completed</button>
+</div>
 <div id="app"></div>
 
-<p class="mut"><small>Ticks are saved in this browser. Progress, not perfection: each tier is ~2–6 weeks. Retest monthly. This is general guidance, not medical advice.</small></p>
+<p class="mut"><small>Ticks are saved in this browser. General guidance, not medical advice.</small></p>
 
 <script>
-const H=1.72;
+const LV=["Starter","Building","Strong","Athlete","Elite"];
+// each category: 5 arrays, one per level
 const D={
-"Weight milestones (healthy BMI at your height = 55–74 kg)":[
-"Lose first 5 kg → 111 kg","105 kg","100 kg (BMI under 34)","95 kg","90 kg","85 kg (BMI under 29)","80 kg","74 kg — BMI 25, healthy range"],
-"Walking / Steps":[
-"Walk 30 min without stopping","6,000 steps in a day","8,000 steps/day for 7 days straight","10,000 steps in a day","10,000 steps/day for 30 days","Walk 10 km in one go","Hike 500 m of elevation / 20 floors of stairs"],
-"Cardio":[
-"Brisk walk 3 km in under 30 min","Jog/walk intervals: 1 min jog, 2 min walk × 8","Run 1 km non-stop","Run 3 km non-stop","Run 5 km non-stop","5 km in under 35 min","Cycle 20 km in one ride","Swim 400 m (any stroke, rests allowed)","Run 10 km"],
-"Strength (bodyweight first)":[
-"Wall push-ups × 15","Incline (knee/bench) push-ups × 10","Sit-to-stand from chair × 20 without hands","Bodyweight squats × 20 (full depth)","Plank 30 sec","Plank 60 sec","5 full floor push-ups","15 full push-ups","1 pull-up / 20 sec dead hang","Farmer's carry: 20 kg per hand, 30 m","Deadlift your bodyweight (kg x 1)","Squat bodyweight"],
-"Mobility & Balance":[
-"Stand on one leg 30 sec each side","Touch your toes (or shins) standing","Get down to floor and up without hands","Deep squat hold 30 sec","Full-body stretch routine 10 min daily × 30 days"],
-"Fasting & Food Discipline":[
-"12 h overnight fast (stop eating 8 pm → 8 am)","14 h fast","16 h fast (16:8) × 7 days","No sugary drinks for 30 days","Cook all meals at home for 14 days","One 24 h fast (water/tea only — only if doctor says OK)","Drink 3 L water daily for 14 days"],
+"Weight & Body":[
+["Weigh yourself weekly for 4 weeks","Lose first 3 kg","Lose 5 kg (111 kg)","Measure waist, chest, hips & photo","Track weight on same day for 8 weeks"],
+["Lose 10 kg (106 kg)","Lose 15 kg (101 kg)","BMI under 35 (104 kg)","Waist down 5 cm","Fit into a size smaller clothes"],
+["100 kg","BMI under 32 (94 kg)","Lose 25 kg (91 kg)","Waist under 100 cm","Visible jawline / collarbones"],
+["BMI under 30 (89 kg)","85 kg","Waist under 94 cm","BMI under 27 (80 kg)","Hold weight within 1 kg for 3 months"],
+["74 kg — BMI 25, healthy range","Waist under 88 cm","Body fat under 20%","Maintain healthy weight for 1 full year","Body fat under 15%"]],
+
+"Walking":[
+["Walk 15 min nonstop","Walk 30 min nonstop","4,000 steps in a day","6,000 steps in a day","Walk daily for 7 days"],
+["8,000 steps in a day","8,000 steps/day for 7 days","Walk 5 km in one go","Walk 45 min nonstop briskly","Take stairs instead of lift for a week"],
+["10,000 steps in a day","10,000 steps/day for 30 days","Walk 10 km in one go","Hike a hill 300 m elevation gain","Walk 3 km under 30 min"],
+["15,000 steps in a day","Walk 20 km in one day","Hike 800 m elevation gain","Weighted-vest/backpack walk 5 km (5 kg)","10,000 steps/day for 90 days"],
+["Walk 30 km in a day","Day hike 1,500 m elevation","Walk a half-marathon (21 km) in under 3 h 15","12,000 steps/day for a full year","Multi-day trek, 3 days × 15 km"]],
+
+"Running":[
+["Jog 30 sec nonstop","Walk/jog intervals 20 min","Jog 1 min × 5 reps","Jog 3 min nonstop","Run/walk 2 km total"],
+["Run 1 km nonstop","Run 2 km nonstop","Run 3 km nonstop","Run 3 days in a week","Run 4 km nonstop"],
+["Run 5 km nonstop","5 km under 35 min","Run 5 km × 3 times a week for a month","Run 7 km nonstop","Join a 5K event"],
+["5 km under 30 min","Run 10 km nonstop","10 km under 65 min","Run 12 km","Join a 10K event"],
+["5 km under 25 min","10 km under 55 min","Run a half marathon (21 km)","Half marathon under 2 h","Run a full marathon (42.2 km)"]],
+
+"Cycling & Swimming":[
+["Cycle 15 min easy","Cycle 5 km","Float on back 30 sec","Swim 1 length with rests","Swim/aqua-walk 20 min in pool"],
+["Cycle 10 km","Cycle 30 min nonstop","Swim 4 lengths with rests","Swim 100 m nonstop","Cycle 3 days a week"],
+["Cycle 20 km in one ride","Cycle 1 hour nonstop","Swim 200 m nonstop","Swim 400 m (any stroke)","Cycle uphill 1 km without stopping"],
+["Cycle 40 km in a ride","Cycle 50 km in under 2 h 30","Swim 800 m nonstop","Swim 1 km in a session","Learn 2 swim strokes"],
+["Cycle 100 km (century ride)","Swim 1.5 km nonstop","Swim 2 km open-water","Cycle 150 km in a day","Complete a sprint triathlon"]],
+
+"Strength":[
+["Wall push-ups × 10","Sit-to-stand from chair × 10","Plank on knees 15 sec","Glute bridge × 15","Bodyweight squat to chair × 10"],
+["Incline push-ups × 10","Sit-to-stand × 20 no hands","Bodyweight squats × 20","Plank 30 sec","Dead hang 10 sec"],
+["5 full floor push-ups","15 full push-ups","Plank 60 sec","Lunges × 10 each leg","Dead hang 30 sec"],
+["25 push-ups","1 strict pull-up","Plank 2 min","Squat bodyweight (116 kg → target your weight)","Farmer's carry 20 kg/hand for 30 m","Deadlift bodyweight × 1"],
+["5 pull-ups","50 push-ups in a set","Bench press bodyweight × 1","Squat 1.5× bodyweight","Deadlift 2× bodyweight","Plank 5 min","Muscle-up or 10 pull-ups"]],
+
+"Core & Flexibility":[
+["Touch knees standing","Neck, shoulder & hip stretch 5 min daily","Sit on floor 1 min","Cat-cow × 10","Stand tall 1 min wall-posture"],
+["Touch shins standing","Get down to floor & up using hands","Stand on one leg 15 sec each","Hip-flexor stretch 30 sec each","Stretch routine 10 min × 14 days"],
+["Touch toes","Get up from floor without hands","Stand on one leg 30 sec each (eyes open)","Deep squat hold 30 sec","Bridge hold 45 sec"],
+["Stand on one leg 30 sec eyes closed","Deep squat hold 2 min","Seated straddle, chest toward floor","Hanging leg raises × 10","Full-body mobility 20 min × 30 days"],
+["Full splits attempt ≤ 10 cm from floor","Pistol squat each leg","L-sit hold 15 sec","Handstand wall hold 30 sec","Yoga class weekly for 6 months"]],
+
+"Fasting & Food":[
+["No sugary drinks for 7 days","12 h overnight fast","Drink 2 L water daily for 7 days","Eat dinner 3 h before bed","Log food for 7 days"],
+["14 h fast","No sugary drinks for 30 days","Cook at home 14 days straight","30 g protein at breakfast × 14 days","No fried food for 14 days"],
+["16 h fast (16:8) × 7 days","16:8 × 30 days","3 L water daily × 14 days","Zero junk/ultra-processed for 14 days","Eat 1.6 g protein/kg consistently × 30 days"],
+["18 h fast","No alcohol for 30 days","One 24 h fast (only with doctor OK)","No processed sugar for 30 days","Meal-prep entire week"],
+["No sugar for 90 days","36 h fast (medical supervision only)","Sustain 16:8 for 6 months","Zero alcohol for 6 months","Whole-food diet for a full year"]],
+
 "Sleep & Recovery":[
-"7+ hours sleep × 7 nights","Fixed bed/wake time × 30 days","No screens 1 h before bed × 14 days"],
+["Sleep 7 h for 3 nights","Fixed wake-up time × 7 days","No caffeine after 2 pm × 7 days","Phone out of bed for 7 days","Stretch 5 min before bed"],
+["Sleep 7+ h × 14 nights","Fixed bed & wake time × 30 days","No screens 1 h before bed × 14 days","Sleep before 11 pm × 14 days","1 full rest day per week × 4 weeks"],
+["Sleep 7–8 h × 30 nights","Cold shower 30 sec × 14 days","Wake without alarm × 7 days","10 min breathing / meditation × 30 days","Deload week after 6 weeks of training"],
+["Sleep 7–8 h × 90 nights","Cold shower 2 min × 30 days","Meditate 20 min × 30 days","Sauna/hot bath recovery weekly × 8 weeks","Track HRV & improve baseline"],
+["Perfect sleep schedule × 180 days","Ice bath 3 min","Meditate daily for a year","Zero skipped rest weeks for 1 year","Sleep score 85+ average for a month"]],
+
 "Health Numbers":[
-"Doctor check-up + blood tests done","Waist under 100 cm","Waist under 94 cm","Resting heart rate under 75","Resting heart rate under 65","Blood pressure under 130/85","Climb 4 flights of stairs without stopping"]
+["Doctor check-up booked","Blood tests: sugar, cholesterol, thyroid, vitamin D","Know your resting heart rate","Know your blood pressure","Know your waist size"],
+["Resting HR under 85","BP under 140/90","Fasting sugar in normal range","Climb 2 flights without stopping","Recover HR within 2 min after stairs"],
+["Resting HR under 75","BP under 130/85","Climb 4 flights without stopping","HbA1c normal","LDL/triglycerides improving"],
+["Resting HR under 65","BP under 125/80","VO₂ max ≥ 35 (watch estimate)","Triglycerides normal","Climb 8 flights without stopping"],
+["Resting HR under 58","BP ~120/80","VO₂ max ≥ 42","All blood markers normal","Annual health check clean 2 years running"]],
+
+"Mind & Habits":[
+["Exercise 10 min for 7 days","Plan workouts on a calendar","Track workouts for 2 weeks","Tell someone your goal","Lay out workout clothes night before"],
+["Exercise 4 days/week for 4 weeks","Never miss twice in a row for 30 days","Workout in the rain / bad mood","Find a training partner","Do a 30-day challenge"],
+["Exercise 4 days/week for 12 weeks","90-day streak of ≥ 20 min movement","Do something you were afraid of at the gym","Train when travelling","Sign up for a public event"],
+["180-day movement streak","Complete a 30-day no-excuse challenge","Compete in an event","Coach/help someone else start","Never skip Monday for 6 months"],
+["365-day movement streak","Complete an endurance event > 4 h","Maintain new body for 2 years","Do a Spartan / obstacle race","Become the person who inspires others"]]
 };
-const S=JSON.parse(localStorage.getItem("pl")||"{}");
+
 const $=id=>document.getElementById(id);
-let n=0;
-$("app").innerHTML=Object.entries(D).map(([t,a])=>`<h2>${t}</h2><div class="card">`+a.map(x=>{n++;
- return `<label><input type="checkbox" data-k="${x}" ${S[x]?"checked":""}>${x}</label>`}).join("")+"</div>").join("");
-function upd(){
- const c=document.querySelectorAll("input[data-k]:checked").length;
- $("prog").value=c/n*100;$("pt").textContent=`${c} / ${n} limits crossed`;
- const w=+$("w").value,b=w/(H*H);
- $("bmi").textContent=`BMI ${b.toFixed(1)} — ${b<18.5?"under":b<25?"healthy":b<30?"overweight":b<35?"obese I":b<40?"obese II":"obese III"} · to reach BMI 25: ${(w-25*H*H).toFixed(1)} kg to go`;
+const S=JSON.parse(localStorage.getItem("pl2")||"{}");
+let fl="all",fc="all",hide=false,q="";
+const items=[];
+for(const [c,ls] of Object.entries(D))ls.forEach((a,l)=>a.forEach(t=>items.push({c,l,t,k:c+"|"+t})));
+
+const mk=(id,opts,get,set)=>{$(id).innerHTML=opts.map(([v,t])=>`<button data-v="${v}" class="${get()==v?"on":""}">${t}</button>`).join("");
+ $(id).onclick=e=>{if(e.target.dataset.v!=null){set(e.target.dataset.v);draw()}}};
+
+function draw(){
+ mk("lvF",[["all","All levels"],...LV.map((n,i)=>[i,`${i+1}. ${n}`])],()=>fl,v=>fl=v);
+ mk("catF",[["all","All categories"],...Object.keys(D).map(c=>[c,c])],()=>fc,v=>fc=v);
+ $("hide").className=hide?"on":"";
+ const vis=items.filter(i=>(fl=="all"||i.l==fl)&&(fc=="all"||i.c==fc)&&(!hide||!S[i.k])&&i.t.toLowerCase().includes(q));
+ const groups={};vis.forEach(i=>(groups[i.c]??={})[i.l]=(groups[i.c][i.l]||[]).concat(i));
+ $("app").innerHTML=Object.entries(groups).map(([c,ls])=>`<h2>${c}</h2>`+Object.entries(ls).map(([l,a])=>
+  `<div class="card"><b>Level ${+l+1} · ${LV[l]}</b>`+a.map(i=>`<label class="${S[i.k]?"done":""}"><input type="checkbox" data-k="${i.k.replace(/"/g,"&quot;")}" ${S[i.k]?"checked":""}><span>${i.t}</span></label>`).join("")+"</div>").join("")).join("")||'<p class="mut">Nothing here.</p>';
+ stats();
+}
+function stats(){
+ const done=items.filter(i=>S[i.k]).length;
+ $("count").textContent=`${done} / ${items.length} limits crossed`;
+ $("lv").innerHTML=LV.map((n,l)=>{const a=items.filter(i=>i.l==l),d=a.filter(i=>S[i.k]).length;
+  return `<div><b>${l+1}. ${n}</b>${d}/${a.length}<progress max="${a.length}" value="${d}"></progress></div>`}).join("");
+ const w=+$("w").value||116,b=w/(1.72*1.72);
+ $("bmi").textContent=`BMI ${b.toFixed(1)} — ${b<18.5?"under":b<25?"healthy":b<30?"overweight":b<35?"obese I":b<40?"obese II":"obese III"} · ${w>25*1.72*1.72?(w-25*1.72*1.72).toFixed(1)+" kg to reach BMI 25":"in healthy range"}`;
  localStorage.setItem("w",w);
 }
 $("w").value=localStorage.getItem("w")||116;
-$("w").oninput=upd;
-document.addEventListener("change",e=>{const k=e.target.dataset.k;if(k){S[k]=e.target.checked;localStorage.setItem("pl",JSON.stringify(S));upd()}});
-upd();
+$("w").oninput=stats;
+$("q").oninput=e=>{q=e.target.value.toLowerCase();draw()};
+$("hide").onclick=()=>{hide=!hide;draw()};
+$("app").onchange=e=>{const k=e.target.dataset.k;if(k){S[k]=e.target.checked;localStorage.setItem("pl2",JSON.stringify(S));
+ e.target.parentElement.classList.toggle("done",e.target.checked);stats()}};
+draw();
 </script>
 </body>
 </html>
