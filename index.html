@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Physical Limits to Cross</title>
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--card:#f3f4f6;--acc:#2563eb;--mut:#6b7280}
+@media(prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--card:#1e1e22;--acc:#60a5fa;--mut:#9ca3af}}
+body{margin:0 auto;max-width:760px;padding:16px;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
+h1{margin:.2em 0}h2{margin:1.6em 0 .4em;color:var(--acc)}
+.card{background:var(--card);border-radius:10px;padding:12px 16px;margin:8px 0}
+label{display:flex;gap:10px;padding:6px 0;cursor:pointer}
+input[type=checkbox]{width:20px;height:20px;flex:none;margin-top:3px}
+small,.mut{color:var(--mut)}
+progress{width:100%;height:14px}
+.warn{border-left:4px solid #dc2626}
+</style>
+</head>
+<body>
+<h1>Physical Limits to Cross</h1>
+<p class="mut">Male · 37 yrs · 172 cm · 116 kg</p>
+
+<div class="card warn"><b>Before you start:</b> at your BMI, see a doctor for a check-up (blood pressure, blood sugar, heart) first. Start low-impact (walk, cycle, swim) to protect knees and joints. Pain ≠ progress — stop on chest pain, dizziness or sharp joint pain. Fasting goals are not for you if you're on diabetes/BP medication without medical advice.</div>
+
+<div class="card">
+  <label>Current weight (kg) <input id="w" type="number" value="116" style="width:80px"></label>
+  <div id="bmi"></div>
+  <progress id="prog" max="100" value="0"></progress>
+  <div id="pt" class="mut"></div>
+</div>
+
+<div id="app"></div>
+
+<p class="mut"><small>Ticks are saved in this browser. Progress, not perfection: each tier is ~2–6 weeks. Retest monthly. This is general guidance, not medical advice.</small></p>
+
+<script>
+const H=1.72;
+const D={
+"Weight milestones (healthy BMI at your height = 55–74 kg)":[
+"Lose first 5 kg → 111 kg","105 kg","100 kg (BMI under 34)","95 kg","90 kg","85 kg (BMI under 29)","80 kg","74 kg — BMI 25, healthy range"],
+"Walking / Steps":[
+"Walk 30 min without stopping","6,000 steps in a day","8,000 steps/day for 7 days straight","10,000 steps in a day","10,000 steps/day for 30 days","Walk 10 km in one go","Hike 500 m of elevation / 20 floors of stairs"],
+"Cardio":[
+"Brisk walk 3 km in under 30 min","Jog/walk intervals: 1 min jog, 2 min walk × 8","Run 1 km non-stop","Run 3 km non-stop","Run 5 km non-stop","5 km in under 35 min","Cycle 20 km in one ride","Swim 400 m (any stroke, rests allowed)","Run 10 km"],
+"Strength (bodyweight first)":[
+"Wall push-ups × 15","Incline (knee/bench) push-ups × 10","Sit-to-stand from chair × 20 without hands","Bodyweight squats × 20 (full depth)","Plank 30 sec","Plank 60 sec","5 full floor push-ups","15 full push-ups","1 pull-up / 20 sec dead hang","Farmer's carry: 20 kg per hand, 30 m","Deadlift your bodyweight (kg x 1)","Squat bodyweight"],
+"Mobility & Balance":[
+"Stand on one leg 30 sec each side","Touch your toes (or shins) standing","Get down to floor and up without hands","Deep squat hold 30 sec","Full-body stretch routine 10 min daily × 30 days"],
+"Fasting & Food Discipline":[
+"12 h overnight fast (stop eating 8 pm → 8 am)","14 h fast","16 h fast (16:8) × 7 days","No sugary drinks for 30 days","Cook all meals at home for 14 days","One 24 h fast (water/tea only — only if doctor says OK)","Drink 3 L water daily for 14 days"],
+"Sleep & Recovery":[
+"7+ hours sleep × 7 nights","Fixed bed/wake time × 30 days","No screens 1 h before bed × 14 days"],
+"Health Numbers":[
+"Doctor check-up + blood tests done","Waist under 100 cm","Waist under 94 cm","Resting heart rate under 75","Resting heart rate under 65","Blood pressure under 130/85","Climb 4 flights of stairs without stopping"]
+};
+const S=JSON.parse(localStorage.getItem("pl")||"{}");
+const $=id=>document.getElementById(id);
+let n=0;
+$("app").innerHTML=Object.entries(D).map(([t,a])=>`<h2>${t}</h2><div class="card">`+a.map(x=>{n++;
+ return `<label><input type="checkbox" data-k="${x}" ${S[x]?"checked":""}>${x}</label>`}).join("")+"</div>").join("");
+function upd(){
+ const c=document.querySelectorAll("input[data-k]:checked").length;
+ $("prog").value=c/n*100;$("pt").textContent=`${c} / ${n} limits crossed`;
+ const w=+$("w").value,b=w/(H*H);
+ $("bmi").textContent=`BMI ${b.toFixed(1)} — ${b<18.5?"under":b<25?"healthy":b<30?"overweight":b<35?"obese I":b<40?"obese II":"obese III"} · to reach BMI 25: ${(w-25*H*H).toFixed(1)} kg to go`;
+ localStorage.setItem("w",w);
+}
+$("w").value=localStorage.getItem("w")||116;
+$("w").oninput=upd;
+document.addEventListener("change",e=>{const k=e.target.dataset.k;if(k){S[k]=e.target.checked;localStorage.setItem("pl",JSON.stringify(S));upd()}});
+upd();
+</script>
+</body>
+</html>
