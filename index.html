@@ -33,7 +33,13 @@ nav,aside{position:sticky;top:64px;max-height:calc(100vh - 72px);overflow:auto}
 h3{margin:14px 0 6px;font-size:13px;text-transform:uppercase;color:var(--mut)}
 .col{display:flex;flex-direction:column;gap:4px}.col button{text-align:left;border-radius:8px}
 .lv{grid-template-columns:1fr}
-@media(max-width:900px){.layout{grid-template-columns:1fr}nav,aside{position:static;max-height:none}.col{flex-direction:row;flex-wrap:wrap}}
+@media(max-width:900px){.layout{grid-template-columns:1fr;gap:8px;padding:0 10px}nav,aside{position:static;max-height:none}
+header{position:static;padding:8px 10px;gap:6px 10px}header h1{font-size:18px;flex:1 1 100%}header input{max-width:none;margin:0}
+nav{min-width:0}nav h3{margin:8px 0 4px}
+.col{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.col button{flex:none;white-space:nowrap}.col h3{flex:none;align-self:center;margin:0 2px 0 8px;white-space:nowrap}
+details{padding:2px 8px}summary{grid-template-columns:1fr auto;font-size:15px}summary progress{grid-column:1/-1}
+label{padding:8px 0}}
 .card,.lv div{box-shadow:var(--sh);border:1px solid var(--line)}.card{border-radius:14px}
 header{background:linear-gradient(90deg,#15803d,#4ade80);color:#fff;border:0}header .mut{color:#eaffef}
 header input{border:0}header button{background:#ffffff33;color:#fff;border-color:#ffffff66}header button.on{background:#fff;color:#15803d}
@@ -46,7 +52,6 @@ input[type=checkbox]{accent-color:var(--acc)}
 details{margin:10px 0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 12px;box-shadow:var(--sh)}
 summary{cursor:pointer;font-weight:600;padding:8px 0;display:grid;grid-template-columns:auto auto 1fr;gap:8px;align-items:center}
 summary progress{height:8px}details .card{box-shadow:none;background:transparent;border:1px solid var(--line)}
-.col h3{flex-basis:100%;margin:10px 0 2px}
 h2 small{font-size:14px;font-weight:400}nav h3 small,nav button small{opacity:.7;font-weight:400}
 </style>
 </head>
